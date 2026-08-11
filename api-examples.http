@@ -1,0 +1,126 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+@studentId = 1
+
+###
+### Health Check
+###
+GET http://localhost:3000/health
+
+###
+### GET - Lister tous les étudiants
+###
+GET @baseUrl/etudiants
+
+###
+### GET - Récupérer un étudiant par ID
+###
+GET @baseUrl/etudiants/@studentId
+
+###
+### POST - Créer un nouvel étudiant
+###
+POST @baseUrl/etudiants
+Content-Type: application/json
+
+{
+  "firstName": "Jean",
+  "lastName": "Dupont",
+  "email": "jean.dupont@example.com",
+  "phone": "+33612345678",
+  "dateOfBirth": "2000-01-15",
+  "address": "123 Rue de Paris, 75000 Paris"
+}
+
+###
+### POST - Créer un deuxième étudiant
+###
+POST @baseUrl/etudiants
+Content-Type: application/json
+
+{
+  "firstName": "Marie",
+  "lastName": "Martin",
+  "email": "marie.martin@example.com",
+  "phone": "+33698765432",
+  "dateOfBirth": "2001-05-20",
+  "address": "456 Avenue des Champs, 75008 Paris"
+}
+
+###
+### PUT - Mettre à jour complètement un étudiant
+###
+PUT @baseUrl/etudiants/@studentId
+Content-Type: application/json
+
+{
+  "firstName": "Jean-Paul",
+  "lastName": "Bernard",
+  "email": "jean.paul.bernard@example.com",
+  "phone": "+33755667788",
+  "dateOfBirth": "2000-01-15",
+  "address": "999 Boulevard Saint-Germain, 75005 Paris"
+}
+
+###
+### PATCH - Mettre à jour partiellement un étudiant (juste le téléphone)
+###
+PATCH @baseUrl/etudiants/@studentId
+Content-Type: application/json
+
+{
+  "phone": "+33622334455"
+}
+
+###
+### PATCH - Mettre à jour partiellement un étudiant (juste l'adresse)
+###
+PATCH @baseUrl/etudiants/@studentId
+Content-Type: application/json
+
+{
+  "address": "555 Rue de Rivoli, 75001 Paris"
+}
+
+###
+### DELETE - Supprimer un étudiant
+###
+DELETE @baseUrl/etudiants/@studentId
+
+###
+### Error Examples
+###
+
+### Erreur 404 - Étudiant non trouvé
+GET @baseUrl/etudiants/99999
+
+### Erreur 400 - Email invalide
+POST @baseUrl/etudiants
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User",
+  "email": "invalid-email",
+  "phone": "+33612345678"
+}
+
+### Erreur 400 - Email déjà existant
+POST @baseUrl/etudiants
+Content-Type: application/json
+
+{
+  "firstName": "Duplicate",
+  "lastName": "Email",
+  "email": "jean.dupont@example.com",
+  "phone": "+33612345678"
+}
+
+### Erreur 400 - Champs requis manquants
+POST @baseUrl/etudiants
+Content-Type: application/json
+
+{
+  "firstName": "Test",
+  "lastName": "User"
+}
