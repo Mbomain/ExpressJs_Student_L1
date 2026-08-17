@@ -1,5 +1,6 @@
 import { Request, Response, Express } from 'express';
 import { StudentService } from '../services/StudentService';
+import { authenticate, authorize } from '../security/AuthMiddleware';
 
 export class StudentController {
   private studentService: StudentService;
@@ -10,12 +11,14 @@ export class StudentController {
   }
 
   private setupRoutes(app: Express): void {
-    app.get('/api/students', (req, res) => this.getAll(req, res));
-    app.get('/api/students/:id', (req, res) => this.getById(req, res));
-    app.post('/api/students', (req, res) => this.create(req, res));
-    app.put('/api/students/:id', (req, res) => this.update(req, res));
-    app.patch('/api/students/:id', (req, res) => this.patch(req, res));
-    app.delete('/api/students/:id', (req, res) => this.delete(req, res));
+    const adminOnly = authorize('ADMIN');
+
+    app.get('/api/students', authenticate, (req, res) => this.getAll(req, res));
+    app.get('/api/students/:id', authenticate, (req, res) => this.getById(req, res));
+    app.post('/api/students', authenticate, adminOnly, (req, res) => this.create(req, res));
+    app.put('/api/students/:id', authenticate, adminOnly, (req, res) => this.update(req, res));
+    app.patch('/api/students/:id', authenticate, adminOnly, (req, res) => this.patch(req, res));
+    app.delete('/api/students/:id', authenticate, adminOnly, (req, res) => this.delete(req, res));
   }
 
   private async getAll(req: Request, res: Response) {

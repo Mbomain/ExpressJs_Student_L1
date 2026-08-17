@@ -1,27 +1,62 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
 @studentId = 1
+# Coller ici l'accessToken retourné par /api/auth/login
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ###
-### Health Check
+### Health Check (public)
 ###
 GET http://localhost:3000/health
 
 ###
-### GET - Lister tous les étudiants
+### === AUTHENTIFICATION (JWT) ===
 ###
-GET @baseUrl/etudiants
 
-###
-### GET - Récupérer un étudiant par ID
-###
-GET @baseUrl/etudiants/@studentId
-
-###
-### POST - Créer un nouvel étudiant
-###
-POST @baseUrl/etudiants
+### POST - Créer un compte (rôle STUDENT)
+POST @baseUrl/auth/register
 Content-Type: application/json
+
+{
+  "email": "jean.dupont@example.com",
+  "password": "password123"
+}
+
+### POST - Se connecter et récupérer un access token
+POST @baseUrl/auth/login
+Content-Type: application/json
+
+{
+  "email": "jean.dupont@example.com",
+  "password": "password123"
+}
+
+### GET - Utilisateur courant
+GET @baseUrl/auth/whoami
+Authorization: Bearer @token
+
+### OPTIONS - Préflight CORS (ce que le navigateur envoie avant un appel protégé)
+OPTIONS @baseUrl/students
+Origin: http://localhost:5173
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: authorization,content-type
+
+###
+### === ÉTUDIANTS (token requis) ===
+###
+
+### GET - Lister tous les étudiants (authentifié)
+GET @baseUrl/students
+Authorization: Bearer @token
+
+### GET - Récupérer un étudiant par ID (authentifié)
+GET @baseUrl/students/@studentId
+Authorization: Bearer @token
+
+### POST - Créer un nouvel étudiant (ADMIN)
+POST @baseUrl/students
+Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "firstName": "Jean",
@@ -32,11 +67,10 @@ Content-Type: application/json
   "address": "123 Rue de Paris, 75000 Paris"
 }
 
-###
-### POST - Créer un deuxième étudiant
-###
-POST @baseUrl/etudiants
+### POST - Créer un deuxième étudiant (ADMIN)
+POST @baseUrl/students
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "firstName": "Marie",
@@ -47,11 +81,10 @@ Content-Type: application/json
   "address": "456 Avenue des Champs, 75008 Paris"
 }
 
-###
-### PUT - Mettre à jour complètement un étudiant
-###
-PUT @baseUrl/etudiants/@studentId
+### PUT - Mettre à jour complètement un étudiant (ADMIN)
+PUT @baseUrl/students/@studentId
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "firstName": "Jean-Paul",
@@ -62,41 +95,67 @@ Content-Type: application/json
   "address": "999 Boulevard Saint-Germain, 75005 Paris"
 }
 
-###
-### PATCH - Mettre à jour partiellement un étudiant (juste le téléphone)
-###
-PATCH @baseUrl/etudiants/@studentId
+### PATCH - Mettre à jour partiellement un étudiant (juste le téléphone) (ADMIN)
+PATCH @baseUrl/students/@studentId
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "phone": "+33622334455"
 }
 
-###
-### PATCH - Mettre à jour partiellement un étudiant (juste l'adresse)
-###
-PATCH @baseUrl/etudiants/@studentId
+### PATCH - Mettre à jour partiellement un étudiant (juste l'adresse) (ADMIN)
+PATCH @baseUrl/students/@studentId
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "address": "555 Rue de Rivoli, 75001 Paris"
 }
 
-###
-### DELETE - Supprimer un étudiant
-###
-DELETE @baseUrl/etudiants/@studentId
+### DELETE - Supprimer un étudiant (ADMIN)
+DELETE @baseUrl/students/@studentId
+Authorization: Bearer @token
 
 ###
 ### Error Examples
 ###
 
+### Erreur 401 - Token absent
+GET @baseUrl/students
+
+### Erreur 401 - Token invalide
+GET @baseUrl/students
+Authorization: Bearer abc.def.ghi
+
+### Erreur 401 - Mauvais identifiants
+POST @baseUrl/auth/login
+Content-Type: application/json
+
+{
+  "email": "jean.dupont@example.com",
+  "password": "wrongpassword"
+}
+
+### Erreur 403 - Rôle STUDENT sur un endpoint ADMIN
+POST @baseUrl/students
+Content-Type: application/json
+Authorization: Bearer @token
+
+{
+  "firstName": "Forbidden",
+  "lastName": "User",
+  "email": "forbidden@example.com"
+}
+
 ### Erreur 404 - Étudiant non trouvé
-GET @baseUrl/etudiants/99999
+GET @baseUrl/students/99999
+Authorization: Bearer @token
 
 ### Erreur 400 - Email invalide
-POST @baseUrl/etudiants
+POST @baseUrl/students
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "firstName": "Test",
@@ -106,8 +165,9 @@ Content-Type: application/json
 }
 
 ### Erreur 400 - Email déjà existant
-POST @baseUrl/etudiants
+POST @baseUrl/students
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "firstName": "Duplicate",
@@ -117,8 +177,9 @@ Content-Type: application/json
 }
 
 ### Erreur 400 - Champs requis manquants
-POST @baseUrl/etudiants
+POST @baseUrl/students
 Content-Type: application/json
+Authorization: Bearer @token
 
 {
   "firstName": "Test",
